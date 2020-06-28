@@ -14,7 +14,8 @@ builds:
       - arm
       - arm64
 archives:
-  - replacements:
+  - name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+    replacements:
       darwin: Darwin
       linux: Linux
       windows: Windows
