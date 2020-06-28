@@ -23,11 +23,16 @@ term data.
 4. Download and install the latest executable for your host platform
    * Mac OS
      ```
-     bla
+     wget https://github.com/adamkirchberger/pingsheet/releases/latest/download/pingsheet_Darwin_x86_64.tar.gz && \
+     tar xvzf pingsheet_Darwin_x86_64.tar.gz && \
+     xattr -dr com.apple.quarantine pingsheet && \
+     mv pingsheet /usr/local/sbin/
      ```
    * Linux
      ```
-     bla
+     wget https://github.com/adamkirchberger/pingsheet/releases/latest/download/pingsheet_Linux_x86_64.tar.gz && \
+     tar xvzf pingsheet_Linux_x86_64.tar.gz && \
+     mv pingsheet /usr/local/sbin/
      ```
 5. Run the tool
    ```
