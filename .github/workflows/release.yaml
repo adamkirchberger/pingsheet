@@ -1,8 +1,9 @@
-name: goreleaser
+name: release
 
 on:
-  pull_request:
   push:
+    branches:
+      - master
 
 jobs:
   release:
@@ -19,7 +20,6 @@ jobs:
             @semantic-release/commit-analyzer
             @semantic-release/release-notes-generator
             @semantic-release/changelog
-            @semantic-release/exec
             @semantic-release/git
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
