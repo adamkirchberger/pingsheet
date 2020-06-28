@@ -1,5 +1,13 @@
 # Pingsheet Changelog
 
+## [1.0.2](https://github.com/adamkirchberger/pingsheet/compare/v1.0.1...v1.0.2) (2020-06-28)
+
+
+### Bug Fixes
+
+* release action only runs on master push ([591198d](https://github.com/adamkirchberger/pingsheet/commit/591198d4a7e8cac1f49e56e9106a2de62ae991ba))
+* rename release action ([406788d](https://github.com/adamkirchberger/pingsheet/commit/406788d8811c9da4bf8701d0073cbb5cca949580))
+
 ## [1.0.1](https://github.com/adamkirchberger/pingsheet/compare/v1.0.0...v1.0.1) (2020-06-28)
 
 
