@@ -85,6 +85,45 @@ func pingTarget(t config.Target, count, interval, timeout int, results chan<- Re
 	results <- result
 }
 
+// CheckPingPermissions tests if root is required and present
+//
+// Returns true if ping needs to be privileged
+func CheckPingPermissions() (bool, error) {
+	// Try unprivileged
+	if ok := tryPing("127.0.0.1", false); ok {
+		log.Debug().Msgf("Ping unprivileged test passed")
+		return false, nil
+	}
+	log.Info().Msgf("Elevate privileges for raw socket access")
+
+	// Try privileged
+	if ok := tryPing("127.0.0.1", true); ok {
+		log.Info().Msgf("Privileged access successful")
+		return true, nil
+	}
+	log.Warn().Msgf("Privileged access unsuccessful")
+
+	return true, errors.New("permission denied, need root")
+}
+
+// tryPing will send a single ping and return true if successful
+func tryPing(target string, privileged bool) bool {
+	pinger, err := ping.NewPinger(target)
+	pinger.Count = 1
+	pinger.Timeout = time.Duration(1) * time.Second
+	pinger.SetPrivileged(privileged)
+	if err != nil {
+		log.Warn().Msgf("Ping error: %s", err)
+		return false
+	}
+
+	pinger.Run()
+	if pinger.Statistics().PacketsRecv == 1 {
+		return true
+	}
+	return false
+}
+
 // calculateJitter in milliseconds from supplied slice of RTT's
 func calculateJitter(rtts []time.Duration) float64 {
 	var diff float64 = 0
