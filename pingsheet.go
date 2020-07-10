@@ -51,6 +51,7 @@ func NewPingsheet(sheetID, keyPath, hostname, secret string) (*Pingsheet, error)
 		log.Error().Msgf("Error registering host: %s", err)
 		os.Exit(1)
 	}
+	log.Info().Msgf("Registration successful")
 	return p, nil
 }
 
