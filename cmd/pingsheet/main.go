@@ -69,7 +69,8 @@ func main() {
 		*secret,      // Secret
 	)
 	if err != nil {
-		fmt.Printf("Error: %s", err)
+		log.Error().Msgf("Error: %s\n", err)
+		os.Exit(1)
 	}
 	p.Run()
 }

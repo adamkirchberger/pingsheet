@@ -4,6 +4,7 @@
 package ping
 
 import (
+	"errors"
 	"math"
 	"sync"
 	"time"
@@ -29,7 +30,7 @@ type Result struct {
 var wg sync.WaitGroup
 
 // Run will perform pings and return the results
-func Run(count int, targets []config.Target) []Result {
+func Run(count int, targets []config.Target, privileged bool) []Result {
 	results := make([]Result, 0)
 	resultsChan := make(chan Result, 1)
 
@@ -37,7 +38,7 @@ func Run(count int, targets []config.Target) []Result {
 	for idx, target := range targets {
 		wg.Add(1)
 		log.Debug().Msgf("Run ping %d: %s", idx+1, target.Name)
-		go pingTarget(target, count, 1, 3, resultsChan)
+		go pingTarget(target, count, 1, 3, privileged, resultsChan)
 	}
 
 	// Watch channel and append
@@ -53,7 +54,7 @@ func Run(count int, targets []config.Target) []Result {
 }
 
 // pingTarget will run a single test to a supplied target
-func pingTarget(t config.Target, count, interval, timeout int, results chan<- Result) {
+func pingTarget(t config.Target, count, interval, timeout int, privileged bool, results chan<- Result) {
 	pinger, err := ping.NewPinger(t.Name)
 	if err != nil {
 		log.Warn().Msgf("Ping had an issue with target `%s`: %s", t.Name, err)
@@ -63,6 +64,7 @@ func pingTarget(t config.Target, count, interval, timeout int, results chan<- Re
 	pinger.Count = count
 	pinger.Interval = time.Duration(interval) * time.Second
 	pinger.Timeout = time.Duration(timeout) * time.Second
+	pinger.SetPrivileged(privileged)
 
 	pinger.Run()
 	stats := pinger.Statistics()
@@ -83,6 +85,45 @@ func pingTarget(t config.Target, count, interval, timeout int, results chan<- Re
 
 	// Save results
 	results <- result
+}
+
+// CheckPingPermissions tests if root is required and present
+//
+// Returns true if ping needs to be privileged
+func CheckPingPermissions() (bool, error) {
+	// Try unprivileged
+	if ok := tryPing("127.0.0.1", false); ok {
+		log.Debug().Msgf("Ping unprivileged test passed")
+		return false, nil
+	}
+	log.Info().Msgf("Elevate privileges for raw socket access")
+
+	// Try privileged
+	if ok := tryPing("127.0.0.1", true); ok {
+		log.Info().Msgf("Privileged access successful")
+		return true, nil
+	}
+	log.Warn().Msgf("Privileged access unsuccessful")
+
+	return true, errors.New("permission denied, need root")
+}
+
+// tryPing will send a single ping and return true if successful
+func tryPing(target string, privileged bool) bool {
+	pinger, err := ping.NewPinger(target)
+	pinger.Count = 1
+	pinger.Timeout = time.Duration(1) * time.Second
+	pinger.SetPrivileged(privileged)
+	if err != nil {
+		log.Warn().Msgf("Ping error: %s", err)
+		return false
+	}
+
+	pinger.Run()
+	if pinger.Statistics().PacketsRecv == 1 {
+		return true
+	}
+	return false
 }
 
 // calculateJitter in milliseconds from supplied slice of RTT's
