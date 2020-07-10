@@ -4,6 +4,7 @@
 package ping
 
 import (
+	"errors"
 	"math"
 	"sync"
 	"time"
@@ -29,7 +30,7 @@ type Result struct {
 var wg sync.WaitGroup
 
 // Run will perform pings and return the results
-func Run(count int, targets []config.Target) []Result {
+func Run(count int, targets []config.Target, privileged bool) []Result {
 	results := make([]Result, 0)
 	resultsChan := make(chan Result, 1)
 
@@ -37,7 +38,7 @@ func Run(count int, targets []config.Target) []Result {
 	for idx, target := range targets {
 		wg.Add(1)
 		log.Debug().Msgf("Run ping %d: %s", idx+1, target.Name)
-		go pingTarget(target, count, 1, 3, resultsChan)
+		go pingTarget(target, count, 1, 3, privileged, resultsChan)
 	}
 
 	// Watch channel and append
@@ -53,7 +54,7 @@ func Run(count int, targets []config.Target) []Result {
 }
 
 // pingTarget will run a single test to a supplied target
-func pingTarget(t config.Target, count, interval, timeout int, results chan<- Result) {
+func pingTarget(t config.Target, count, interval, timeout int, privileged bool, results chan<- Result) {
 	pinger, err := ping.NewPinger(t.Name)
 	if err != nil {
 		log.Warn().Msgf("Ping had an issue with target `%s`: %s", t.Name, err)
@@ -63,6 +64,7 @@ func pingTarget(t config.Target, count, interval, timeout int, results chan<- Re
 	pinger.Count = count
 	pinger.Interval = time.Duration(interval) * time.Second
 	pinger.Timeout = time.Duration(timeout) * time.Second
+	pinger.SetPrivileged(privileged)
 
 	pinger.Run()
 	stats := pinger.Statistics()
