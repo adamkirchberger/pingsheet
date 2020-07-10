@@ -1,5 +1,7 @@
 # Pingsheet Changelog
 
+## [1.1.1](https://github.com/adamkirchberger/pingsheet/compare/v1.1.0...v1.1.1) (2020-07-10)
+
 # [1.1.0](https://github.com/adamkirchberger/pingsheet/compare/v1.0.2...v1.1.0) (2020-07-10)
 
 
