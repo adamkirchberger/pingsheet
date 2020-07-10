@@ -19,11 +19,12 @@ import (
 
 // Pingsheet is the main structure for daemon data
 type Pingsheet struct {
-	SheetID  string
-	hostname string
-	secret   string
-	svc      *sheets.Service
-	host     *config.Host
+	SheetID    string
+	hostname   string
+	secret     string
+	svc        *sheets.Service
+	host       *config.Host
+	privileged bool
 }
 
 const (
@@ -32,6 +33,12 @@ const (
 
 // NewPingsheet is used to create a new Pingsheet instance
 func NewPingsheet(sheetID, keyPath, hostname, secret string) (*Pingsheet, error) {
+	// Check if elevated privileges are required and present
+	pingPrivs, err := ping.CheckPingPermissions()
+	if err != nil {
+		return nil, err
+	}
+
 	svc, err := gsheets.NewService(keyPath)
 	if err != nil {
 		log.Error().Msgf("Error creating GSheets service: %s", err)
@@ -39,11 +46,12 @@ func NewPingsheet(sheetID, keyPath, hostname, secret string) (*Pingsheet, error)
 	}
 
 	p := &Pingsheet{
-		SheetID:  sheetID,
-		hostname: hostname,
-		secret:   secret,
-		svc:      svc,
-		host:     nil,
+		SheetID:    sheetID,
+		hostname:   hostname,
+		secret:     secret,
+		svc:        svc,
+		host:       nil,
+		privileged: pingPrivs,
 	}
 
 	err = p.pullLatestConfig()
@@ -213,7 +221,7 @@ func (p *Pingsheet) prepHeaders() {
 // and uploads the results to the host sheet.
 func (p *Pingsheet) pingTargets() {
 	log.Debug().Msg("Request ping test to all targets")
-	results := ping.Run(p.host.Count, p.host.Targets)
+	results := ping.Run(p.host.Count, p.host.Targets, p.privileged)
 
 	log.Debug().Msgf("Ping returned %d target results", len(results))
 
