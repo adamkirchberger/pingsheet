@@ -64,7 +64,7 @@ func (p *Pingsheet) Run() {
 	configTime := time.Now()
 	for {
 		// Pull new config
-		if time.Since(configTime) >= time.Duration(configPullInterval*time.Now().Second()) {
+		if time.Since(configTime) >= time.Duration(configPullInterval)*time.Second {
 			updateTime := time.Now()
 			log.Info().Msgf("Config update start")
 			err := p.pullLatestConfig()
